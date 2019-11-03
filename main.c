@@ -25,6 +25,12 @@ typedef struct {
 	Coord last_move;
 } BoardState;
 
+void repeat_char(char c, int n) {
+	for (int i = 0; i < n; i++) {
+		putchar(c);
+	}
+}
+
 bool is_star_point(int size, int x, int y) {
 int high_line = size > 9 ? 4 : 3;
 
@@ -41,11 +47,8 @@ void render_board(BoardState *b)
 	int size = b->size;
 	// Top border
 	putchar('+');
-	for (int i = 0; i < 2 * size + 1; i++) {
-		putchar('-');
-	}
-	putchar('+');
-	putchar('\n');
+	repeat_char('-', 2 * size + 1);
+	puts("+");
 	// Middle
 	for (int i = 0; i < size; i++) {
 		// Right border
@@ -70,17 +73,12 @@ void render_board(BoardState *b)
 			}
 		}
 		// Left border
-		putchar(' ');
-		putchar('|');
-		putchar('\n');
+		puts(" |");
 	}
 	// Bottom border
 	putchar('+');
-	for (int i = 0; i < 2 * size + 1; i++) {
-		putchar('-');
-	}
-	putchar('+');
-	putchar('\n');
+	repeat_char('-', 2 * size + 1);
+	puts("+");
 }
 
 int main() {
