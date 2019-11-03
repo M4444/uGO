@@ -1,6 +1,7 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <string.h>
 
 enum BOARD_SIZES {
 	SMALL = 9,
@@ -13,6 +14,17 @@ typedef enum {
 	BLACK,
 	WHITE
 } SPOT_STATE;
+
+typedef struct {
+	char c;
+	int n;
+} CoordCharNum;
+
+bool is_valid_coord(CoordCharNum coord, int size) {
+	return (coord.c >= 'a' && coord.c < 'a' + 1 + size && coord.c != 'i' ||
+		coord.c >= 'A' && coord.c < 'A' + 1 + size && coord.c != 'I') &&
+	       coord.n > 0 && coord.n <= size;
+}
 
 typedef struct {
 	int x;
@@ -72,7 +84,7 @@ void render_board(BoardState *b)
 		// Middle
 		for (int j = 0; j < size; j++) {
 			putchar(' ');
-			switch (b->spots[i][j]) {
+			switch (b->spots[size-i-1][j]) {
 			case EMPTY:
 				if (is_star_point(size, i, j)) {
 					putchar('+');
@@ -99,24 +111,67 @@ void render_board(BoardState *b)
 	print_coord_chars(size);
 }
 
+void play_move(CoordCharNum move, BoardState *board) {
+	bool blacks_turn;
+	if (board->last_move.x < 0 ||
+	    board->spots[board->last_move.y][board->last_move.x] == WHITE) {
+		blacks_turn = true;
+	} else {
+		blacks_turn = false;
+	}
+	if (move.c >= 'A' && move.c <= 'Z') {
+		move.c = move.c - 'A' + 'a';
+	}
+	Coord new_move = { move.c - 'a', move.n - 1 };
+	if (move.c > 'h') {
+		new_move.x--;
+	}
+	board->spots[new_move.y][new_move.x] = blacks_turn ? BLACK : WHITE;
+	memcpy(&board->last_move, &new_move, sizeof(new_move));
+}
+
 int main() {
-	int size = 19;
+	int size;
+	printf("Pick a board size: ");
+	scanf("%d", &size);
+	if (size != 9 && size != 13 && size != 19) {
+		printf("Invalid size!\n");
+		exit(1);
+	}
+
+	// Create board
 	BoardState board;
 	board.size = size;
 	board.spots = malloc(board.size * sizeof(SPOT_STATE *));
 	for (int i = 0; i < board.size; i++) {
 		board.spots[i] = malloc(board.size * sizeof(SPOT_STATE));
 	}
+	board.last_move.x = -1;
+	board.last_move.y = -1;
 
-	board.size = 9;
 	render_board(&board);
 	putchar('\n');
-	board.size = 13;
-	render_board(&board);
-	putchar('\n');
-	board.size = 19;
-	render_board(&board);
-	putchar('\n');
+	while (true) {
+		char buff[1024];
+		CoordCharNum coord;
+		printf("Pick a move: ");
+		fgets(buff, sizeof(buff), stdin);
+		scanf("%c", &coord.c);
+		if (coord.c == 'q') {
+			break;
+		}
+		if (!scanf("%d", &coord.n)) {
+			printf("Invalid move.\n");
+			continue;
+		}
+		if (!is_valid_coord(coord, size)) {
+			printf("Invalid move.\n");
+			continue;
+		}
+		play_move(coord, &board);
+		render_board(&board);
+		putchar('\n');
+	}
 
 	free(board.spots);
 	return 0;
