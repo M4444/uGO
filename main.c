@@ -31,6 +31,18 @@ void repeat_char(char c, int n) {
 	}
 }
 
+void print_coord_chars(int size)
+{
+	repeat_char(' ', size > 9 ? 6 : 5);
+	for (char c = 'A'; c < 'A' + 1 + size; c++) {
+		if (c == 'I') {
+			c++;
+		}
+		printf("%c ", c);
+	}
+	putchar('\n');
+}
+
 bool is_star_point(int size, int x, int y) {
 int high_line = size > 9 ? 4 : 3;
 
@@ -45,12 +57,16 @@ return (x == high_line - 1 ||
 void render_board(BoardState *b)
 {
 	int size = b->size;
+
+	print_coord_chars(size);
 	// Top border
+	repeat_char(' ', size > 9 ? 4 : 3);
 	putchar('+');
 	repeat_char('-', 2 * size + 1);
 	puts("+");
 	// Middle
 	for (int i = 0; i < size; i++) {
+		printf("%*d ", size > 9 ? 3 : 2, size - i);
 		// Right border
 		putchar('|');
 		// Middle
@@ -73,12 +89,14 @@ void render_board(BoardState *b)
 			}
 		}
 		// Left border
-		puts(" |");
+		printf(" |%*d\n", size > 9 ? 3 : 2, size - i);
 	}
 	// Bottom border
+	repeat_char(' ', size > 9 ? 4 : 3);
 	putchar('+');
 	repeat_char('-', 2 * size + 1);
 	puts("+");
+	print_coord_chars(size);
 }
 
 int main() {
@@ -92,10 +110,14 @@ int main() {
 
 	board.size = 9;
 	render_board(&board);
+	putchar('\n');
 	board.size = 13;
 	render_board(&board);
+	putchar('\n');
 	board.size = 19;
 	render_board(&board);
+	putchar('\n');
 
+	free(board.spots);
 	return 0;
 }
