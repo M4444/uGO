@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "types.h"
 
@@ -108,13 +107,7 @@ int main() {
 
 	// Create board
 	BoardState board;
-	board.size = size;
-	board.spots = malloc(board.size * sizeof(SPOT_STATE *));
-	for (int i = 0; i < board.size; i++) {
-		board.spots[i] = malloc(board.size * sizeof(SPOT_STATE));
-	}
-	board.last_move.x = -1;
-	board.last_move.y = -1;
+	init_board_state(&board, size);
 
 	render_board(&board);
 	putchar('\n');
@@ -140,6 +133,6 @@ int main() {
 		putchar('\n');
 	}
 
-	free(board.spots);
+	free_board_state(&board);
 	return 0;
 }

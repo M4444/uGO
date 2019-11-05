@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 enum BOARD_SIZES {
 	SMALL = 9,
@@ -36,5 +37,25 @@ typedef struct {
 	SPOT_STATE **spots;
 	Coord last_move;
 } BoardState;
+
+void init_board_state(BoardState *board, int size) {
+	board->size = size;
+	board->spots = malloc(size * sizeof(SPOT_STATE *));
+	for (int i = 0; i < size; i++) {
+		board->spots[i] = malloc(size * sizeof(SPOT_STATE));
+	}
+	board->last_move.x = -1;
+	board->last_move.y = -1;
+}
+
+void free_board_state(BoardState *board) {
+	for (int i = 0; i < board->size; i++) {
+		free(board->spots[i]);
+	}
+	free(board->spots);
+	board->size = 0;
+	board->last_move.x = -1;
+	board->last_move.y = -1;
+}
 
 #endif
