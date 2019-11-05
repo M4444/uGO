@@ -2,40 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-enum BOARD_SIZES {
-	SMALL = 9,
-	MEDIUM = 13,
-	LARGE = 19
-};
-
-typedef enum {
-	EMPTY,
-	BLACK,
-	WHITE
-} SPOT_STATE;
-
-typedef struct {
-	char c;
-	int n;
-} CoordCharNum;
-
-bool is_valid_coord(CoordCharNum coord, int size) {
-	return (coord.c >= 'a' && coord.c < 'a' + 1 + size && coord.c != 'i' ||
-		coord.c >= 'A' && coord.c < 'A' + 1 + size && coord.c != 'I') &&
-	       coord.n > 0 && coord.n <= size;
-}
-
-typedef struct {
-	int x;
-	int y;
-} Coord;
-
-typedef struct {
-	int size;
-	SPOT_STATE **spots;
-	Coord last_move;
-} BoardState;
+#include "types.h"
 
 void repeat_char(char c, int n) {
 	for (int i = 0; i < n; i++) {
