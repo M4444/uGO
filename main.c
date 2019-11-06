@@ -25,10 +25,10 @@ bool is_star_point(int size, int x, int y) {
 int high_line = size > 9 ? 4 : 3;
 
 return (x == high_line - 1 ||
-        x == size/2 && size % 2 == 1 && (size > 9 || x == y) ||
+        x == size/2 && size % 2 == 1 && (size > 13 || x == y) ||
         x == size - high_line) &
        (y == high_line - 1 ||
-        y == size/2 && size % 2 == 1 && (size > 9 || y == x) ||
+        y == size/2 && size % 2 == 1 && (size > 13 || y == x) ||
         y == size - high_line);
 }
 
