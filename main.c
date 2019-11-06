@@ -34,6 +34,9 @@ return (x == high_line - 1 ||
 
 void render_board(BoardState *b)
 {
+	printf("--Captures--\n");
+	printf("Black: %3d      White: %3d\n", b->captures[0], b->captures[1]);
+
 	int size = b->size;
 
 	print_coord_chars(size);
@@ -77,14 +80,75 @@ void render_board(BoardState *b)
 	print_coord_chars(size);
 }
 
-void play_move(CoordCharNum move, BoardState *board) {
-	bool blacks_turn;
-	if (board->last_move.x < 0 ||
-	    board->spots[board->last_move.y][board->last_move.x] == WHITE) {
-		blacks_turn = true;
-	} else {
-		blacks_turn = false;
+bool group_has_liberties(Coord position, BoardState *board) {
+	Stack processed_stones;
+	Stack unprocessed_stones;
+	init_stack(&processed_stones);
+	init_stack(&unprocessed_stones);
+
+	Color group_color = board->spots[position.y][position.x];
+	push(&position, &unprocessed_stones);
+	while (!is_empty(&unprocessed_stones)) {
+		Coord curr = pop(&unprocessed_stones);
+		if (contains(&curr, &processed_stones)) {
+			continue;
+		}
+		for (int i = 0; i < 4; i++) {
+			Coord adjacent = { curr.x +     i % 2 - i / 2,
+					   curr.y + (i+1) % 2 - i / 2 };
+			// Check for the edge of the board
+			if (adjacent.x < 0 || adjacent.x >= board->size ||
+			    adjacent.y < 0 || adjacent.y >= board->size) {
+				continue;
+			}
+			SPOT_STATE state = board->spots[adjacent.y][adjacent.x];
+			if (state == EMPTY) {
+				return true;
+			} else if (state == group_color) {
+				push(&adjacent, &unprocessed_stones);
+			}
+		}
+		push(&curr, &processed_stones);
 	}
+	return false;
+}
+
+void remove_group(Coord position, BoardState *board) {
+	Stack unprocessed_stones;
+
+	Color group_color = board->spots[position.y][position.x];
+	push(&position, &unprocessed_stones);
+	while (!is_empty(&unprocessed_stones)) {
+		Coord curr = pop(&unprocessed_stones);
+		if (board->spots[curr.y][curr.x] == EMPTY) {
+			// Already removed
+			continue;
+		}
+		for (int i = 0; i < 4; i++) {
+			Coord adjacent = { curr.x +     i % 2 - i / 2,
+					   curr.y + (i+1) % 2 - i / 2 };
+			// Check for the edge of the board
+			if (adjacent.x < 0 || adjacent.x >= board->size ||
+			    adjacent.y < 0 || adjacent.y >= board->size) {
+				continue;
+			}
+			SPOT_STATE state = board->spots[adjacent.y][adjacent.x];
+			if (state == group_color) {
+				push(&adjacent, &unprocessed_stones);
+			}
+		}
+		// Remove current stone
+		board->spots[curr.y][curr.x] = EMPTY;
+		add_captures(1, OPPOSITE_COLOR(group_color), board);
+	}
+}
+
+bool play_move(CoordCharNum move, BoardState *board) {
+	// Find out whose turn it is
+	Color move_color = board->last_move.x < 0 ||
+			   board->spots[board->last_move.y][board->last_move.x]
+			    == WHITE ? BLACK : WHITE;
+	// Transform coordinates
 	if (move.c >= 'A' && move.c <= 'Z') {
 		move.c = move.c - 'A' + 'a';
 	}
@@ -92,8 +156,37 @@ void play_move(CoordCharNum move, BoardState *board) {
 	if (move.c > 'h') {
 		new_move.x--;
 	}
-	board->spots[new_move.y][new_move.x] = blacks_turn ? BLACK : WHITE;
+	// Check legality of the move
+	if (board->spots[new_move.y][new_move.x] != EMPTY ||
+	    new_move.x == board->last_move.x &&
+	    new_move.y == board->last_move.y) {
+		return false;
+	}
+	// Capture groups surrounding the new move
+	board->spots[new_move.y][new_move.x] = move_color;
+	for (int i = 0; i < 4; i++) {
+		Coord adjacent = { new_move.x, new_move.y };
+		adjacent.x +=     i % 2 - i / 2;
+		adjacent.y += (i+1) % 2 - i / 2;
+		// Check for the edge of the board
+		if (adjacent.x < 0 || adjacent.x >= board->size ||
+		    adjacent.y < 0 || adjacent.y >= board->size) {
+			continue;
+		}
+		if (board->spots[adjacent.y][adjacent.x] ==
+		     OPPOSITE_COLOR(move_color) &&
+		    !group_has_liberties(adjacent, board)) {
+			remove_group(adjacent, board);
+		}
+	}
+	// Check if it's a suicide move
+	if (!group_has_liberties(new_move, board)) {
+		board->spots[new_move.y][new_move.x] = EMPTY;
+		return false;
+	}
+	// Accept the move into the record
 	memcpy(&board->last_move, &new_move, sizeof(new_move));
+	return true;
 }
 
 int main() {
@@ -121,14 +214,17 @@ int main() {
 			break;
 		}
 		if (!scanf("%d", &coord.n)) {
-			printf("Invalid move.\n");
+			printf("Invalid coordinate.\n");
 			continue;
 		}
 		if (!is_valid_coord(coord, size)) {
+			printf("Invalid coordinate.\n");
+			continue;
+		}
+		if (!play_move(coord, &board)) {
 			printf("Invalid move.\n");
 			continue;
 		}
-		play_move(coord, &board);
 		render_board(&board);
 		putchar('\n');
 	}
