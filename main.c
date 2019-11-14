@@ -80,17 +80,19 @@ void render_board(BoardState *b)
 	print_coord_chars(size);
 }
 
-bool group_has_liberties(Coord position, BoardState *board) {
-	Stack processed_stones;
+// If position has no liberties, fill group (if it's non-NULL) and return false.
+// If position has liberties, free group and return true.
+bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
+	Stack *processed_stones = group ? group : malloc(sizeof(Stack));
 	Stack unprocessed_stones;
-	init_stack(&processed_stones);
+	init_stack(processed_stones);
 	init_stack(&unprocessed_stones);
 
 	Color group_color = board->spots[position.y][position.x];
 	push(&position, &unprocessed_stones);
 	while (!is_empty(&unprocessed_stones)) {
 		Coord curr = pop(&unprocessed_stones);
-		if (contains(&curr, &processed_stones)) {
+		if (contains(&curr, processed_stones)) {
 			continue;
 		}
 		for (int i = 0; i < 4; i++) {
@@ -103,44 +105,32 @@ bool group_has_liberties(Coord position, BoardState *board) {
 			}
 			SPOT_STATE state = board->spots[adjacent.y][adjacent.x];
 			if (state == EMPTY) {
+				free_stack(processed_stones);
 				return true;
 			} else if (state == group_color) {
 				push(&adjacent, &unprocessed_stones);
 			}
 		}
-		push(&curr, &processed_stones);
+		push(&curr, processed_stones);
+	}
+	if (!group) {
+		free_stack(processed_stones);
 	}
 	return false;
 }
 
-void remove_group(Coord position, BoardState *board) {
-	Stack unprocessed_stones;
-
-	Color group_color = board->spots[position.y][position.x];
-	push(&position, &unprocessed_stones);
-	while (!is_empty(&unprocessed_stones)) {
-		Coord curr = pop(&unprocessed_stones);
-		if (board->spots[curr.y][curr.x] == EMPTY) {
-			// Already removed
-			continue;
-		}
-		for (int i = 0; i < 4; i++) {
-			Coord adjacent = { curr.x +     i % 2 - i / 2,
-					   curr.y + (i+1) % 2 - i / 2 };
-			// Check for the edge of the board
-			if (adjacent.x < 0 || adjacent.x >= board->size ||
-			    adjacent.y < 0 || adjacent.y >= board->size) {
-				continue;
-			}
-			SPOT_STATE state = board->spots[adjacent.y][adjacent.x];
-			if (state == group_color) {
-				push(&adjacent, &unprocessed_stones);
-			}
+void remove_group(Stack *group, BoardState *board) {
+	Color group_color = 0;
+	while (!is_empty(group)) {
+		Coord curr = pop(group);
+		if (!group_color) {
+			group_color = board->spots[curr.y][curr.x];
 		}
 		// Remove current stone
 		board->spots[curr.y][curr.x] = EMPTY;
 		add_captures(1, OPPOSITE_COLOR(group_color), board);
 	}
+	free_stack(group);
 }
 
 bool play_move(CoordCharNum move, BoardState *board) {
@@ -173,14 +163,15 @@ bool play_move(CoordCharNum move, BoardState *board) {
 		    adjacent.y < 0 || adjacent.y >= board->size) {
 			continue;
 		}
+		Stack group;
 		if (board->spots[adjacent.y][adjacent.x] ==
 		     OPPOSITE_COLOR(move_color) &&
-		    !group_has_liberties(adjacent, board)) {
-			remove_group(adjacent, board);
+		    !group_has_liberties(adjacent, &group, board)) {
+			remove_group(&group, board);
 		}
 	}
 	// Check if it's a suicide move
-	if (!group_has_liberties(new_move, board)) {
+	if (!group_has_liberties(new_move, NULL, board)) {
 		board->spots[new_move.y][new_move.x] = EMPTY;
 		return false;
 	}
