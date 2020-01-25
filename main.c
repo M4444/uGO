@@ -60,20 +60,6 @@ bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
 	return false;
 }
 
-void remove_group(Stack *group, BoardState *board) {
-	Color group_color = 0;
-	while (!is_empty(group)) {
-		Coord curr = pop(group);
-		if (!group_color) {
-			group_color = board->spots[curr.y][curr.x];
-		}
-		// Remove current stone
-		board->spots[curr.y][curr.x] = EMPTY;
-		add_captures(1, OPPOSITE_COLOR(group_color), board);
-	}
-	free_stack(group);
-}
-
 bool play_move(CoordCharNum move, BoardState *board) {
 	// Find out whose turn it is
 	Color move_color = board->last_move.x < 0 ||
@@ -108,7 +94,19 @@ bool play_move(CoordCharNum move, BoardState *board) {
 		if (board->spots[adjacent.y][adjacent.x] ==
 		     OPPOSITE_COLOR(move_color) &&
 		    !group_has_liberties(adjacent, &group, board)) {
-			remove_group(&group, board);
+			// Remove group
+			Color group_color = 0;
+			while (!is_empty(&group)) {
+				Coord curr = pop(&group);
+				if (!group_color) {
+					group_color =
+						board->spots[curr.y][curr.x];
+				}
+				// Remove current stone
+				board->spots[curr.y][curr.x] = EMPTY;
+				add_captures(1, OPPOSITE_COLOR(group_color),
+					     board);
+			}
 		}
 	}
 	// Check if it's a suicide move
