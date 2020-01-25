@@ -198,10 +198,10 @@ int main() {
 	while (true) {
 		char buff[1024];
 		CoordCharNum coord;
-		printf("Pick a move: ");
+		printf("Pick a move ('x' to exit): ");
 		fgets(buff, sizeof(buff), stdin);
 		scanf("%c", &coord.c);
-		if (coord.c == 'q') {
+		if (coord.c == 'x') {
 			break;
 		}
 		if (!scanf("%d", &coord.n)) {
