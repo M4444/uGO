@@ -36,6 +36,19 @@ typedef struct {
 	int y;
 } Coord;
 
+Coord CoordCharNum_to_Coord(CoordCharNum coord_cn) {
+	// Convert to lowercase
+	if (coord_cn.c >= 'A' && coord_cn.c <= 'Z') {
+		coord_cn.c = coord_cn.c - 'A' + 'a';
+	}
+
+	Coord coord = { coord_cn.c - 'a', coord_cn.n - 1 };
+	if (coord_cn.c > 'h') {
+		coord.x--;
+	}
+	return coord;
+}
+
 typedef struct {
 	int size;
 	SPOT_STATE **spots;

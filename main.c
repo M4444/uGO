@@ -150,15 +150,7 @@ skip_board_render:
 			printf("Invalid coordinate.\n");
 			goto skip_board_render;
 		}
-		// Transform coordinates
-		if (coord.c >= 'A' && coord.c <= 'Z') {
-			coord.c = coord.c - 'A' + 'a';
-		}
-		Coord coord_new_move = { coord.c - 'a', coord.n - 1 };
-		if (coord.c > 'h') {
-			coord_new_move.x--;
-		}
-		// Check legality of the move
+		Coord coord_new_move = CoordCharNum_to_Coord(coord);
 		if (board.spots[coord_new_move.y][coord_new_move.x] != EMPTY) {
 			printf("Invalid move: spot is occupied.\n");
 			goto skip_board_render;
