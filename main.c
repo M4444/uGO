@@ -21,65 +21,6 @@ void print_coord_chars(int size)
 	putchar('\n');
 }
 
-bool is_star_point(int size, int x, int y) {
-int high_line = size > 9 ? 4 : 3;
-
-return (x == high_line - 1 ||
-        x == size/2 && size % 2 == 1 && (size > 13 || x == y) ||
-        x == size - high_line) &
-       (y == high_line - 1 ||
-        y == size/2 && size % 2 == 1 && (size > 13 || y == x) ||
-        y == size - high_line);
-}
-
-void render_board(BoardState *b)
-{
-	printf("--Captures--\n");
-	printf("Black: %3d      White: %3d\n", b->captures[0], b->captures[1]);
-
-	int size = b->size;
-
-	print_coord_chars(size);
-	// Top border
-	repeat_char(' ', size > 9 ? 4 : 3);
-	putchar('+');
-	repeat_char('-', 2 * size + 1);
-	puts("+");
-	// Middle
-	for (int i = 0; i < size; i++) {
-		printf("%*d ", size > 9 ? 3 : 2, size - i);
-		// Right border
-		putchar('|');
-		// Middle
-		for (int j = 0; j < size; j++) {
-			putchar(' ');
-			switch (b->spots[size-i-1][j]) {
-			case EMPTY:
-				if (is_star_point(size, i, j)) {
-					putchar('+');
-				} else {
-					putchar('.');
-				}
-				break;
-			case BLACK:
-				putchar('X');
-				break;
-			case WHITE:
-				putchar('O');
-				break;
-			}
-		}
-		// Left border
-		printf(" |%*d\n", size > 9 ? 3 : 2, size - i);
-	}
-	// Bottom border
-	repeat_char(' ', size > 9 ? 4 : 3);
-	putchar('+');
-	repeat_char('-', 2 * size + 1);
-	puts("+");
-	print_coord_chars(size);
-}
-
 // If position has no liberties, fill group (if it's non-NULL) and return false.
 // If position has liberties, free group and return true.
 bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
@@ -189,37 +130,90 @@ int main() {
 		exit(1);
 	}
 
+	int high_line = size > 9 ? 4 : 3;
+
 	// Create board
 	BoardState board;
 	init_board_state(&board, size);
 
-	render_board(&board);
-	putchar('\n');
+	// Variables for storing user input
+	char input_command_buff[1024];
+	CoordCharNum coord;
 	while (true) {
-		char buff[1024];
-		CoordCharNum coord;
+		// --- Render board ---
+		printf("--Captures--\n");
+		printf("Black: %3d      White: %3d\n",
+		       board.captures[0], board.captures[1]);
+
+		print_coord_chars(size);
+		// Top border
+		repeat_char(' ', size > 9 ? 4 : 3);
+		putchar('+');
+		repeat_char('-', 2 * size + 1);
+		puts("+");
+		// Middle
+		for (int i = 0; i < size; i++) {
+			printf("%*d ", size > 9 ? 3 : 2, size - i);
+			// Right border
+			putchar('|');
+			// Middle
+			for (int j = 0; j < size; j++) {
+				putchar(' ');
+				switch (board.spots[size-i-1][j]) {
+				case EMPTY:
+					if ((i == high_line - 1 ||
+					     i == size/2 && size % 2 == 1 &&
+					     (size > 13 || i == j) ||
+					     i == size - high_line) &
+					    (j == high_line - 1 ||
+					     j == size/2 && size % 2 == 1 &&
+					     (size > 13 || j == i) ||
+					     j == size - high_line)) {
+						// Star point
+						putchar('+');
+					} else {
+						putchar('.');
+					}
+					break;
+				case BLACK:
+					putchar('X');
+					break;
+				case WHITE:
+					putchar('O');
+					break;
+				}
+			}
+			// Left border
+			printf(" |%*d\n", size > 9 ? 3 : 2, size - i);
+		}
+		// Bottom border
+		repeat_char(' ', size > 9 ? 4 : 3);
+		putchar('+');
+		repeat_char('-', 2 * size + 1);
+		puts("+");
+		print_coord_chars(size);
+		putchar('\n');
+skip_board_render:
+		// --- Read and play a move ---
 		printf("Pick a move ('x' to exit): ");
-		fgets(buff, sizeof(buff), stdin);
+		fgets(input_command_buff, sizeof(input_command_buff), stdin);
 		scanf("%c", &coord.c);
 		if (coord.c == 'x') {
 			break;
 		}
 		if (!scanf("%d", &coord.n)) {
 			printf("Invalid coordinate.\n");
-			continue;
+			goto skip_board_render;
 		}
 		if (!is_valid_coord(coord, size)) {
 			printf("Invalid coordinate.\n");
-			continue;
+			goto skip_board_render;
 		}
 		if (!play_move(coord, &board)) {
 			printf("Invalid move.\n");
-			continue;
+			goto skip_board_render;
 		}
-		render_board(&board);
-		putchar('\n');
 	}
 
 	free_board_state(&board);
-	return 0;
 }
