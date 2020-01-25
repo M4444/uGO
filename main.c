@@ -60,65 +60,6 @@ bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
 	return false;
 }
 
-bool play_move(CoordCharNum move, BoardState *board) {
-	// Find out whose turn it is
-	Color move_color = board->last_move.x < 0 ||
-			   board->spots[board->last_move.y][board->last_move.x]
-			    == WHITE ? BLACK : WHITE;
-	// Transform coordinates
-	if (move.c >= 'A' && move.c <= 'Z') {
-		move.c = move.c - 'A' + 'a';
-	}
-	Coord new_move = { move.c - 'a', move.n - 1 };
-	if (move.c > 'h') {
-		new_move.x--;
-	}
-	// Check legality of the move
-	if (board->spots[new_move.y][new_move.x] != EMPTY ||
-	    new_move.x == board->last_move.x &&
-	    new_move.y == board->last_move.y) {
-		return false;
-	}
-	// Capture groups surrounding the new move
-	board->spots[new_move.y][new_move.x] = move_color;
-	for (int i = 0; i < 4; i++) {
-		Coord adjacent = { new_move.x, new_move.y };
-		adjacent.x +=     i % 2 - i / 2;
-		adjacent.y += (i+1) % 2 - i / 2;
-		// Check for the edge of the board
-		if (adjacent.x < 0 || adjacent.x >= board->size ||
-		    adjacent.y < 0 || adjacent.y >= board->size) {
-			continue;
-		}
-		Stack group;
-		if (board->spots[adjacent.y][adjacent.x] ==
-		     OPPOSITE_COLOR(move_color) &&
-		    !group_has_liberties(adjacent, &group, board)) {
-			// Remove group
-			Color group_color = 0;
-			while (!is_empty(&group)) {
-				Coord curr = pop(&group);
-				if (!group_color) {
-					group_color =
-						board->spots[curr.y][curr.x];
-				}
-				// Remove current stone
-				board->spots[curr.y][curr.x] = EMPTY;
-				add_captures(1, OPPOSITE_COLOR(group_color),
-					     board);
-			}
-		}
-	}
-	// Check if it's a suicide move
-	if (!group_has_liberties(new_move, NULL, board)) {
-		board->spots[new_move.y][new_move.x] = EMPTY;
-		return false;
-	}
-	// Accept the move into the record
-	memcpy(&board->last_move, &new_move, sizeof(new_move));
-	return true;
-}
-
 int main() {
 	int size;
 	printf("Pick a board size: ");
@@ -137,6 +78,8 @@ int main() {
 	// Variables for storing user input
 	char input_command_buff[1024];
 	CoordCharNum coord;
+
+	Color color_playing_turn = BLACK;
 	while (true) {
 		// --- Render board ---
 		printf("--Captures--\n");
@@ -192,7 +135,7 @@ int main() {
 		print_coord_chars(size);
 		putchar('\n');
 skip_board_render:
-		// --- Read and play a move ---
+		// --- Read the move ---
 		printf("Pick a move ('x' to exit): ");
 		fgets(input_command_buff, sizeof(input_command_buff), stdin);
 		scanf("%c", &coord.c);
@@ -207,10 +150,57 @@ skip_board_render:
 			printf("Invalid coordinate.\n");
 			goto skip_board_render;
 		}
-		if (!play_move(coord, &board)) {
-			printf("Invalid move.\n");
+		// Transform coordinates
+		if (coord.c >= 'A' && coord.c <= 'Z') {
+			coord.c = coord.c - 'A' + 'a';
+		}
+		Coord coord_new_move = { coord.c - 'a', coord.n - 1 };
+		if (coord.c > 'h') {
+			coord_new_move.x--;
+		}
+		// Check legality of the move
+		if (board.spots[coord_new_move.y][coord_new_move.x] != EMPTY) {
+			printf("Invalid move: spot is occupied.\n");
 			goto skip_board_render;
 		}
+		// --- Play the move ---
+		// Try to capture groups surrounding the new move
+		board.spots[coord_new_move.y]
+			   [coord_new_move.x] = color_playing_turn;
+		for (int i = 0; i < 4; i++) {
+			Coord adjacent = { coord_new_move.x, coord_new_move.y };
+			adjacent.x +=     i % 2 - i / 2;
+			adjacent.y += (i+1) % 2 - i / 2;
+			// Check for the edge of the board
+			if (adjacent.x < 0 || adjacent.x >= board.size ||
+			    adjacent.y < 0 || adjacent.y >= board.size) {
+				continue;
+			}
+			Stack group;
+			Color group_color = OPPOSITE_COLOR(color_playing_turn);
+			if (board.spots[adjacent.y][adjacent.x] ==
+				group_color &&
+			    !group_has_liberties(adjacent, &group, &board)) {
+				// Remove group
+				while (!is_empty(&group)) {
+					Coord curr = pop(&group);
+					// Remove current stone
+					board.spots[curr.y][curr.x] = EMPTY;
+					add_captures(1, color_playing_turn,
+						     &board);
+				}
+			}
+		}
+		// Check if it's a suicide move
+		if (!group_has_liberties(coord_new_move, NULL, &board)) {
+			board.spots[coord_new_move.y][coord_new_move.x] = EMPTY;
+			printf("Invalid move: suicide.\n");
+			goto skip_board_render;
+		}
+		// Accept the move into the record
+		memcpy(&board.last_move, &coord_new_move,
+		       sizeof(coord_new_move));
+		color_playing_turn = OPPOSITE_COLOR(color_playing_turn);
 	}
 
 	free_board_state(&board);
