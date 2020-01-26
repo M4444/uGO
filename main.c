@@ -1,15 +1,16 @@
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "types.h"
 
-void repeat_char(char c, int n) {
-	for (int i = 0; i < n; i++) {
+void repeat_char(char c, uint8_t n) {
+	for (uint8_t i = 0; i < n; i++) {
 		putchar(c);
 	}
 }
 
-void print_coord_chars(int size)
+void print_coord_chars(uint8_t size)
 {
 	repeat_char(' ', size > 9 ? 6 : 5);
 	for (char c = 'A'; c < 'A' + 1 + size; c++) {
@@ -36,7 +37,7 @@ bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
 		if (contains(&curr, processed_stones)) {
 			continue;
 		}
-		for (int i = 0; i < 4; i++) {
+		for (uint8_t i = 0; i < 4; i++) {
 			Coord adjacent = { curr.x +     i % 2 - i / 2,
 					   curr.y + (i+1) % 2 - i / 2 };
 			// Check for the edge of the board
@@ -61,15 +62,15 @@ bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
 }
 
 int main() {
-	int size;
+	uint8_t size;
 	printf("Pick a board size: ");
-	scanf("%d", &size);
+	scanf("%"SCNu8, &size);
 	if (size != 9 && size != 13 && size != 19) {
 		printf("Invalid size!\n");
 		exit(1);
 	}
 
-	int high_line = size > 9 ? 4 : 3;
+	uint8_t high_line = size > 9 ? 4 : 3;
 
 	// Create board
 	BoardState board;
@@ -93,12 +94,12 @@ int main() {
 		repeat_char('-', 2 * size + 1);
 		puts("+");
 		// Middle
-		for (int i = 0; i < size; i++) {
+		for (uint8_t i = 0; i < size; i++) {
 			printf("%*d ", size > 9 ? 3 : 2, size - i);
 			// Right border
 			putchar('|');
 			// Middle
-			for (int j = 0; j < size; j++) {
+			for (uint8_t j = 0; j < size; j++) {
 				putchar(' ');
 				switch (board.spots[size-i-1][j]) {
 				case EMPTY:
@@ -142,7 +143,7 @@ skip_board_render:
 		if (coord.c == 'x') {
 			break;
 		}
-		if (!scanf("%d", &coord.n)) {
+		if (!scanf("%"SCNu8, &coord.n)) {
 			printf("Invalid coordinate.\n");
 			goto skip_board_render;
 		}
@@ -159,7 +160,7 @@ skip_board_render:
 		// Try to capture groups surrounding the new move
 		board.spots[coord_new_move.y]
 			   [coord_new_move.x] = color_playing_turn;
-		for (int i = 0; i < 4; i++) {
+		for (uint8_t i = 0; i < 4; i++) {
 			Coord adjacent = { coord_new_move.x, coord_new_move.y };
 			adjacent.x +=     i % 2 - i / 2;
 			adjacent.y += (i+1) % 2 - i / 2;
