@@ -37,12 +37,13 @@ bool group_has_liberties(Coord position, Stack *group, BoardState *board) {
 		if (contains(&curr, processed_stones)) {
 			continue;
 		}
+		// Iterate over adjacent positions (y+1, x+1, x-1, y-1)
 		for (uint8_t i = 0; i < 4; i++) {
 			Coord adjacent = { curr.x +     i % 2 - i / 2,
 					   curr.y + (i+1) % 2 - i / 2 };
 			// Check for the edge of the board
-			if (adjacent.x < 0 || adjacent.x >= board->size ||
-			    adjacent.y < 0 || adjacent.y >= board->size) {
+			if (adjacent.x >= board->size ||
+			    adjacent.y >= board->size) {
 				continue;
 			}
 			SPOT_STATE state = board->spots[adjacent.y][adjacent.x];
@@ -160,13 +161,14 @@ skip_board_render:
 		// Try to capture groups surrounding the new move
 		board.spots[coord_new_move.y]
 			   [coord_new_move.x] = color_playing_turn;
+		// Iterate over adjacent positions (y+1, x+1, x-1, y-1)
 		for (uint8_t i = 0; i < 4; i++) {
 			Coord adjacent = { coord_new_move.x, coord_new_move.y };
 			adjacent.x +=     i % 2 - i / 2;
 			adjacent.y += (i+1) % 2 - i / 2;
 			// Check for the edge of the board
-			if (adjacent.x < 0 || adjacent.x >= board.size ||
-			    adjacent.y < 0 || adjacent.y >= board.size) {
+			if (adjacent.x >= board.size ||
+			    adjacent.y >= board.size) {
 				continue;
 			}
 			Stack group;
