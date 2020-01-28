@@ -55,10 +55,10 @@ typedef struct {
 	uint8_t **spots;
 	uint8_t size;
 	Coord last_move;
-	uint8_t captures[2];
+	uint16_t captures[2];
 } BoardState;
 
-void add_captures(uint8_t num, Color color, BoardState *board) {
+void add_captures(uint16_t num, Color color, BoardState *board) {
 	board->captures[color - 1] += num;
 }
 
@@ -82,6 +82,8 @@ void free_board_state(BoardState *board) {
 	board->size = 0;
 	board->last_move.x = -1;
 	board->last_move.y = -1;
+	board->captures[0] = 0;
+	board->captures[1] = 0;
 }
 
 // Stack
