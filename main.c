@@ -161,6 +161,7 @@ skip_board_render:
 		// Try to capture groups surrounding the new move
 		board.spots[coord_new_move.y]
 			   [coord_new_move.x] = color_playing_turn;
+		Color group_color = OPPOSITE_COLOR(color_playing_turn);
 		// Iterate over adjacent positions (y+1, x+1, x-1, y-1)
 		for (uint8_t i = 0; i < 4; i++) {
 			Coord adjacent = { coord_new_move.x, coord_new_move.y };
@@ -172,7 +173,6 @@ skip_board_render:
 				continue;
 			}
 			Stack group;
-			Color group_color = OPPOSITE_COLOR(color_playing_turn);
 			if (board.spots[adjacent.y][adjacent.x] ==
 				group_color &&
 			    !group_has_liberties(adjacent, &group, &board)) {
