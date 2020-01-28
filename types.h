@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -135,10 +136,7 @@ void push(Coord *element, Stack *stack) {
 }
 
 Coord pop(Stack *stack) {
-	if (stack->last == stack->buff) {
-		Coord ret = { -1, -1 };
-		return ret;
-	}
+	assert(stack->last != stack->buff);
 	return *--stack->last;
 }
 
