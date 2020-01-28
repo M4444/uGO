@@ -131,7 +131,7 @@ void push(Coord *element, Stack *stack) {
 		stack->last = stack->buff + old_stack_size;
 		stack->end = stack->buff + new_stack_size;
 	}
-	memcpy(++stack->last, element, sizeof(Coord));
+	memcpy(stack->last++, element, sizeof(Coord));
 }
 
 Coord pop(Stack *stack) {
@@ -139,7 +139,7 @@ Coord pop(Stack *stack) {
 		Coord ret = { -1, -1 };
 		return ret;
 	}
-	return *stack->last--;
+	return *--stack->last;
 }
 
 #endif
