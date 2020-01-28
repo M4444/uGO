@@ -187,6 +187,17 @@ skip_board_render:
 				}
 			}
 		}
+		// Check for ko
+		if (get_previous_captures(opponents_color, &board) == 1 &&
+		    captures == 1 &&
+		    board.spots[board.previous_move.y][board.previous_move.x]
+		     == EMPTY) {
+			board.spots[board.previous_move.y]
+				   [board.previous_move.x] = opponents_color;
+			board.spots[coord_new_move.y][coord_new_move.x] = EMPTY;
+			printf("Invalid move: ko.\n");
+			goto skip_board_render;
+		}
 		// Check if it's a suicide move
 		if (!group_has_liberties(coord_new_move, NULL, &board)) {
 			board.spots[coord_new_move.y][coord_new_move.x] = EMPTY;

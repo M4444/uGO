@@ -55,11 +55,18 @@ typedef struct {
 	uint8_t **spots;
 	uint8_t size;
 	uint16_t captures[2];
+	// Previous state of the board used to check for ko
 	Coord previous_move;
+	uint16_t previous_captures[2];
 } BoardState;
 
 void add_captures(uint16_t num, Color color, BoardState *board) {
+	board->previous_captures[color - 1] = num;
 	board->captures[color - 1] += num;
+}
+
+uint16_t get_previous_captures(Color color, BoardState *board) {
+	return board->previous_captures[color - 1];
 }
 
 void init_board_state(BoardState *board, uint8_t size) {
@@ -72,6 +79,8 @@ void init_board_state(BoardState *board, uint8_t size) {
 	board->captures[1] = 0;
 	board->previous_move.x = -1;
 	board->previous_move.y = -1;
+	board->previous_captures[0] = 0;
+	board->previous_captures[1] = 0;
 }
 
 void free_board_state(BoardState *board) {
@@ -84,6 +93,8 @@ void free_board_state(BoardState *board) {
 	board->captures[1] = 0;
 	board->previous_move.x = -1;
 	board->previous_move.y = -1;
+	board->previous_captures[0] = 0;
+	board->previous_captures[1] = 0;
 }
 
 // Stack
