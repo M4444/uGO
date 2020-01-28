@@ -161,7 +161,7 @@ skip_board_render:
 		// Try to capture groups surrounding the new move
 		board.spots[coord_new_move.y]
 			   [coord_new_move.x] = color_playing_turn;
-		Color group_color = OPPOSITE_COLOR(color_playing_turn);
+		Color opponents_color = OPPOSITE_COLOR(color_playing_turn);
 		uint16_t captures = 0;
 		// Iterate over adjacent positions (y+1, x+1, x-1, y-1)
 		for (uint8_t i = 0; i < 4; i++) {
@@ -175,13 +175,14 @@ skip_board_render:
 			}
 			Stack group;
 			if (board.spots[adjacent.y][adjacent.x] ==
-				group_color &&
+			     opponents_color &&
 			    !group_has_liberties(adjacent, &group, &board)) {
 				// Remove group
 				while (!is_empty(&group)) {
-					Coord curr = pop(&group);
+					Coord dead_stone = pop(&group);
 					// Remove current stone
-					board.spots[curr.y][curr.x] = EMPTY;
+					board.spots[dead_stone.y]
+						   [dead_stone.x] = EMPTY;
 					captures++;
 				}
 			}
@@ -193,7 +194,7 @@ skip_board_render:
 			goto skip_board_render;
 		}
 		// Accept the move into the record
-		memcpy(&board.last_move, &coord_new_move,
+		memcpy(&board.previous_move, &coord_new_move,
 		       sizeof(coord_new_move));
 		add_captures(captures, color_playing_turn, &board);
 		color_playing_turn = OPPOSITE_COLOR(color_playing_turn);

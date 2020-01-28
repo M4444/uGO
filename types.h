@@ -54,8 +54,8 @@ Coord CoordCharNum_to_Coord(CoordCharNum coord_cn) {
 typedef struct {
 	uint8_t **spots;
 	uint8_t size;
-	Coord last_move;
 	uint16_t captures[2];
+	Coord previous_move;
 } BoardState;
 
 void add_captures(uint16_t num, Color color, BoardState *board) {
@@ -68,10 +68,10 @@ void init_board_state(BoardState *board, uint8_t size) {
 	for (uint8_t i = 0; i < size; i++) {
 		board->spots[i] = malloc(size * sizeof(uint8_t));
 	}
-	board->last_move.x = -1;
-	board->last_move.y = -1;
 	board->captures[0] = 0;
 	board->captures[1] = 0;
+	board->previous_move.x = -1;
+	board->previous_move.y = -1;
 }
 
 void free_board_state(BoardState *board) {
@@ -80,10 +80,10 @@ void free_board_state(BoardState *board) {
 	}
 	free(board->spots);
 	board->size = 0;
-	board->last_move.x = -1;
-	board->last_move.y = -1;
 	board->captures[0] = 0;
 	board->captures[1] = 0;
+	board->previous_move.x = -1;
+	board->previous_move.y = -1;
 }
 
 // Stack
